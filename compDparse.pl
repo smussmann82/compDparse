@@ -6,9 +6,9 @@ use Data::Dumper;
 use Getopt::Std;
 
 my %opts;
-getopts('f:p:', \%opts);
+getopts('f:m:p:', \%opts);
 
-my( $file, $pval ) = &parsecom(\%opts);
+my( $file, $map, $pval ) = &parsecom(\%opts);
 
 my $correction = 10000;
 
@@ -21,34 +21,25 @@ if( $intp < 1 ){
 }
 
 my @lines;
+my @maplines;
 my %hash;
 $hash{"chisqr"}=0;
 $hash{"Z"}=0;
 
-print( $file, "\n");
-
-open( F, $file ) or die "Can't open $file: $!\n\n";
-
-while( my $line = <F> ){
-	chomp( $line );
-	push( @lines, $line );
-}
-
-close F;
+# put files into arrays
+&filetoarray( $file, \@lines );
+&filetoarray( $map, \@maplines );
 
 # remove header
 my $header = shift( @lines);
 
 foreach my $line( @lines ){
 	my @temp = split(/\t/, $line);
-	#print $temp[9], "\t"; #chisqr p-val
-	#print $temp[11], "\n"; #Z p-val
 	my $chiresult = &lessthan($temp[9], $correction, $intp, "chisqr", \%hash );
 	my $zresult = &lessthan( $temp[11], $correction, $intp, "Z", \%hash );
-	#if($temp[11]*$correction < $intp){
-	#	#print "yes\n";
-	#	$hash{"Z"}+=1;
-	#}
+	if( $chiresult == 1 or $zresult == 1 ){
+		&introgress( $temp[4], $temp[5], $temp[1], $temp[2], $temp[3] );
+	}
 }
 
 print Dumper(\%hash);
@@ -67,8 +58,9 @@ sub parsecom{
 	# set default values for command line arguments
 	my $file = $opts{f} or die "\nMust specify an input file\n\n";
 	my $pval = $opts{p} || "0.01";
+	my $map = $opts{m} or die "\nMust specify popmap file\n\n";
 
-	return( $file, $pval );
+	return( $file, $map, $pval );
 
 }
 
@@ -87,3 +79,42 @@ sub lessthan{
 	}
 }
 
+#####################################################################################################
+# subroutine to get taxa involved in introgression
+
+sub introgress{
+
+	my( $abba, $baba, $p3, $p2, $p1 ) = @_;
+
+	my $string;
+
+	if( $abba > $baba ){
+		$string = join('-', $p3, $p2);
+	}else{
+		$string = join('-', $p3, $p1 );
+	}
+
+	print $string, "\n";
+
+}
+
+#####################################################################################################
+# subroutine to put file into an array
+
+sub filetoarray{
+
+	my( $infile, $array ) = @_;
+
+	#open the input file
+	open( FILE, $infile ) or die "Can't open $infile: $!\n\n";
+
+	# loop through input file, pushing lines onto array
+	while( my $line = <FILE> ){
+		chomp( $line );
+		next if($line =~ /^\s*$/);
+		push( @$array, $line );
+	}
+
+	close FILE;
+}
+#####################################################################################################
