@@ -59,18 +59,8 @@ foreach my $line( @lines ){
 	}
 }
 
-open( OUT, '>', "$out.chisq" ) or die "Can't open $out.chisq: $!\n\n";
-
-foreach my $key( sort keys %chihash ){
-	print OUT $file, "\t", $key, "\t", $chihash{$key}, "\t", $count, "\n";;
-}
-
-close OUT;
-
-#print Dumper(\%hash);
-#print Dumper(\%pophash);
-print Dumper( \%chihash );
-print Dumper(\%zhash );
+&printout("$out.chisq", \%chihash, $count);
+&printout("$out.zscore", \%zhash, $count );
 
 exit;
 
@@ -145,5 +135,20 @@ sub filetoarray{
 	}
 
 	close FILE;
+}
+#####################################################################################################
+# subroutine to print output file
+
+sub printout{
+
+	my( $outfile, $hash, $count ) = @_;
+
+	open( OUT, '>', $outfile ) or die "Can't open $outfile: $!\n\n";
+
+	foreach my $key( sort keys %$hash ){
+		print OUT $file, "\t", $key, "\t", $$hash{$key}, "\t", $count, "\n";
+	}
+
+	close OUT;
 }
 #####################################################################################################
