@@ -6,9 +6,9 @@ use Data::Dumper;
 use Getopt::Std;
 
 my %opts;
-getopts('f:m:p:', \%opts);
+getopts('f:m:o:p:', \%opts);
 
-my( $file, $map, $pval ) = &parsecom(\%opts);
+my( $file, $map, $pval, $out ) = &parsecom(\%opts);
 
 my $correction = 10000;
 
@@ -24,6 +24,8 @@ my @lines;
 my @maplines;
 my %hash;
 my %pophash;
+my %chihash;
+my %zhash;
 $hash{"chisqr"}=0;
 $hash{"Z"}=0;
 
@@ -38,6 +40,7 @@ foreach my $line( @maplines ){
 
 # remove header
 my $header = shift( @lines);
+my $count = scalar(@lines);
 
 foreach my $line( @lines ){
 	my @temp = split(/\t/, $line);
@@ -45,11 +48,29 @@ foreach my $line( @lines ){
 	my $zresult = &lessthan( $temp[11], $correction, $intp, "Z", \%hash );
 	if( $chiresult == 1 or $zresult == 1 ){
 		my $result = &introgress( $temp[4], $temp[5], $temp[1], $temp[2], $temp[3], \%pophash );
+		$chihash{$result}+=0;
+		$zhash{$result}+=0;
+		if( $chiresult == 1 ){
+			$chihash{$result}++;
+		}
+		if( $zresult == 1 ){
+			$zhash{$result}++;
+		}
 	}
 }
 
+open( OUT, '>', "$out.chisq" ) or die "Can't open $out.chisq: $!\n\n";
+
+foreach my $key( sort keys %chihash ){
+	print OUT $file, "\t", $key, "\t", $chihash{$key}, "\t", $count, "\n";;
+}
+
+close OUT;
+
 #print Dumper(\%hash);
-print Dumper(\%pophash);
+#print Dumper(\%pophash);
+print Dumper( \%chihash );
+print Dumper(\%zhash );
 
 exit;
 
@@ -66,8 +87,9 @@ sub parsecom{
 	my $file = $opts{f} or die "\nMust specify an input file\n\n";
 	my $pval = $opts{p} || "0.01";
 	my $map = $opts{m} or die "\nMust specify popmap file\n\n";
+	my $out = $opts{o} || "$file.sig";
 
-	return( $file, $map, $pval );
+	return( $file, $map, $pval, $out );
 
 }
 
