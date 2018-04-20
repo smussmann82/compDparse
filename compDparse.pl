@@ -23,12 +23,18 @@ if( $intp < 1 ){
 my @lines;
 my @maplines;
 my %hash;
+my %pophash;
 $hash{"chisqr"}=0;
 $hash{"Z"}=0;
 
 # put files into arrays
 &filetoarray( $file, \@lines );
 &filetoarray( $map, \@maplines );
+
+foreach my $line( @maplines ){
+	my @temp = split(/\s+/, $line);
+	$pophash{$temp[0]} = $temp[1];
+}
 
 # remove header
 my $header = shift( @lines);
@@ -38,11 +44,12 @@ foreach my $line( @lines ){
 	my $chiresult = &lessthan($temp[9], $correction, $intp, "chisqr", \%hash );
 	my $zresult = &lessthan( $temp[11], $correction, $intp, "Z", \%hash );
 	if( $chiresult == 1 or $zresult == 1 ){
-		&introgress( $temp[4], $temp[5], $temp[1], $temp[2], $temp[3] );
+		my $result = &introgress( $temp[4], $temp[5], $temp[1], $temp[2], $temp[3], \%pophash );
 	}
 }
 
-print Dumper(\%hash);
+#print Dumper(\%hash);
+print Dumper(\%pophash);
 
 exit;
 
@@ -84,17 +91,17 @@ sub lessthan{
 
 sub introgress{
 
-	my( $abba, $baba, $p3, $p2, $p1 ) = @_;
+	my( $abba, $baba, $p3, $p2, $p1, $hash ) = @_;
 
 	my $string;
 
 	if( $abba > $baba ){
-		$string = join('-', $p3, $p2);
+		$string = join('-', $$hash{$p3}, $$hash{$p2});
 	}else{
-		$string = join('-', $p3, $p1 );
+		$string = join('-', $$hash{$p3}, $$hash{$p1} );
 	}
 
-	print $string, "\n";
+	return $string;
 
 }
 
