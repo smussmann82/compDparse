@@ -6,9 +6,20 @@ use Data::Dumper;
 use Getopt::Std;
 
 my %opts;
-getopts('f:', \%opts);
+getopts('f:p:', \%opts);
 
-my( $file ) = &parsecom(\%opts);
+my( $file, $pval ) = &parsecom(\%opts);
+
+my $correction = 10000;
+
+my $intp = $pval * $correction;
+
+if( $intp < 1 ){
+	die "The p-value you entered is < 0.0001.  compD only prints p-values to 4 decimal places.\nPlease enter a larger value.\n\n";
+}elsif( $intp >= $correction ){
+	die "The p-value you entered is > or = 1. Please enter a smaller value.\n\n";
+}
+
 my @lines;
 my %hash;
 $hash{"chisqr"}=0;
@@ -25,21 +36,19 @@ while( my $line = <F> ){
 
 close F;
 
+# remove header
+my $header = shift( @lines);
+
 foreach my $line( @lines ){
-	#print $line, "\n";
-	if( $line !~ /pval$/ ){
-		my @temp = split(/\t/, $line);
-		#print $temp[9], "\t"; #chisqr p-val
-		#print $temp[11], "\n"; #Z p-val
-		if( $temp[9] < 0.01){
-			#print "yes\n";
-			$hash{"chisqr"}+=1
-		}
-		if($temp[11] < 0.01){
-			#print "yes\n";
-			$hash{"Z"}+=1;
-		}
-	}
+	my @temp = split(/\t/, $line);
+	#print $temp[9], "\t"; #chisqr p-val
+	#print $temp[11], "\n"; #Z p-val
+	my $chiresult = &lessthan($temp[9], $correction, $intp, "chisqr", \%hash );
+	my $zresult = &lessthan( $temp[11], $correction, $intp, "Z", \%hash );
+	#if($temp[11]*$correction < $intp){
+	#	#print "yes\n";
+	#	$hash{"Z"}+=1;
+	#}
 }
 
 print Dumper(\%hash);
@@ -57,9 +66,24 @@ sub parsecom{
 
 	# set default values for command line arguments
 	my $file = $opts{f} or die "\nMust specify an input file\n\n";
+	my $pval = $opts{p} || "0.01";
 
-	return( $file );
+	return( $file, $pval );
 
 }
 
 #####################################################################################################
+# subroutine to test if value less than another
+
+sub lessthan{
+
+	my( $val, $correction, $p, $hashkey, $hash ) = @_;
+
+	if( $val*$correction < $p ){
+		$$hash{$hashkey}++;
+		return 1;
+	}else{
+		return 0;
+	}
+}
+
