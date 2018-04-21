@@ -26,6 +26,7 @@ my %hash;
 my %pophash;
 my %chihash;
 my %zhash;
+my @loci;
 $hash{"chisqr"}=0;
 $hash{"Z"}=0;
 
@@ -46,6 +47,7 @@ foreach my $line( @lines ){
 	my @temp = split(/\t/, $line);
 	my $chiresult = &lessthan($temp[9], $correction, $intp, "chisqr", \%hash );
 	my $zresult = &lessthan( $temp[11], $correction, $intp, "Z", \%hash );
+	push( @loci, $temp[6] );
 	if( $chiresult == 1 or $zresult == 1 ){
 		my $result = &introgress( $temp[4], $temp[5], $temp[1], $temp[2], $temp[3], \%pophash );
 		$chihash{$result}+=0;
@@ -59,8 +61,11 @@ foreach my $line( @lines ){
 	}
 }
 
-&printout("$out.chisq", \%chihash, $count);
-&printout("$out.zscore", \%zhash, $count );
+my $avg = &mean(\@loci);
+my $sd = &stdev(\@loci, $avg);
+
+&printout("$out.chisq", \%chihash, $count, $avg, $sd);
+&printout("$out.zscore", \%zhash, $count, $avg, $sd );
 
 exit;
 
@@ -141,14 +146,63 @@ sub filetoarray{
 
 sub printout{
 
-	my( $outfile, $hash, $count ) = @_;
+	my( $outfile, $hash, $count, $avg, $sd ) = @_;
 
 	open( OUT, '>', $outfile ) or die "Can't open $outfile: $!\n\n";
 
 	foreach my $key( sort keys %$hash ){
-		print OUT $file, "\t", $key, "\t", $$hash{$key}, "\t", $count, "\n";
+		print OUT $file, "\t", $key, "\t", $$hash{$key}, "\t", $count, "\t", $avg, "\t", $sd, "\n";
 	}
 
 	close OUT;
 }
+#####################################################################################################
+# subroutine to calculate mean of an array
+
+sub mean{
+
+	my( $data ) = @_;
+
+	if( not @$data ){
+		die( "Empty array\n" );
+	}
+
+	my $total = 0;
+
+	foreach my $item( @$data ){
+		$total+=$item;
+	}
+
+	my $length = scalar( @$data );
+	my $average = $total / $length;
+	return $average;
+
+}
+#####################################################################################################
+# subroutine to calculate standard deviation
+
+sub stdev{
+
+	my( $data, $avg ) = @_;
+
+	if( not @$data ){
+		die( "Empty array\n" );
+	}
+
+	my $total = 0;
+	foreach my $item( @$data ){
+		my $temp = $item - $avg;
+		$temp = $temp**2;
+		$total+=$temp;
+	}
+	
+	my $length = scalar( @$data );
+	my $variance = $total / $length;
+
+	my $sd = sqrt($variance);
+
+	return $sd;
+
+}
+
 #####################################################################################################
