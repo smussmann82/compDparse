@@ -61,8 +61,8 @@ foreach my $line( @lines ){
 	}
 }
 
-my $avg = &mean(\@loci);
-my $sd = &stdev(\@loci, $avg);
+my $avg = sprintf( "%.2f", &mean(\@loci) );
+my $sd = sprintf( "%.2f", &stdev(\@loci, $avg) );
 
 &printout("$out.chisq", \%chihash, $count, $avg, $sd);
 &printout("$out.zscore", \%zhash, $count, $avg, $sd );
