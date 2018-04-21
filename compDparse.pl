@@ -33,6 +33,8 @@ my %pophash;
 my %chihash;
 my %zhash;
 my @loci;
+my @abba;
+my @baba;
 $hash{"chisqr"}=0;
 $hash{"Z"}=0;
 
@@ -54,6 +56,8 @@ foreach my $line( @lines ){
 	my $chiresult = &lessthan($temp[9], $correction, $intp, "chisqr", \%hash );
 	my $zresult = &lessthan( $temp[11], $correction, $intp, "Z", \%hash );
 	push( @loci, $temp[6] );
+	push( @abba, $temp[4] );
+	push( @baba, $temp[5] );
 	if( $chiresult == 1 or $zresult == 1 ){
 		my $result = &introgress( $temp[4], $temp[5], $temp[1], $temp[2], $temp[3], \%pophash );
 		$chihash{$result}+=0;
@@ -69,9 +73,15 @@ foreach my $line( @lines ){
 
 my $avg = sprintf( "%.2f", &mean(\@loci) );
 my $sd = sprintf( "%.2f", &stdev(\@loci, $avg) );
+my $avg_abba = sprintf( "%.2f", &mean(\@abba) );
+my $sd_abba = sprintf( "%.2f", &stdev(\@abba, $avg_abba) );
+my $avg_baba = sprintf( "%.2f", &mean(\@baba) );
+my $sd_baba = sprintf( "%.2f", &stdev(\@baba, $avg_baba) );
 
-&printout("$out.chisq", \%chihash, $count, $avg, $sd);
-&printout("$out.zscore", \%zhash, $count, $avg, $sd );
+
+
+&printout("$out.chisq", \%chihash, $count, $avg, $sd, $avg_abba, $avg_baba, $sd_abba, $sd_baba );
+&printout("$out.zscore", \%zhash, $count, $avg, $sd, $avg_abba, $avg_baba, $sd_abba, $sd_baba );
 
 exit;
 
@@ -152,15 +162,17 @@ sub filetoarray{
 
 sub printout{
 
-	my( $outfile, $hash, $count, $avg, $sd ) = @_;
+	my( $outfile, $hash, $count, $avg, $sd, $abba, $baba, $sdABBA, $sdBABA ) = @_;
 
 	open( OUT, '>', $outfile ) or die "Can't open $outfile: $!\n\n";
 
 	foreach my $key( sort keys %$hash ){
-		print OUT $file, "\t", $key, "\t", $$hash{$key}, "\t", $count, "\t", $avg, "\t", $sd, "\n";
+		print OUT $file, "\t", $key, "\t", $$hash{$key}, "\t", $count, "\t", $avg, "\t", $sd, "\t", $abba, "\t", $baba, "\t", $sdABBA, "\t", $sdBABA, "\n";
 	}
 
 	close OUT;
+
+	print "file\tpair\tnum_sig\ttotal\tavg_loci\tsd_loci\tavg_abba\tavg_baba\tsd_abba\tsd_baba\n";
 }
 #####################################################################################################
 # subroutine to calculate mean of an array
