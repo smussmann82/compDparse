@@ -5,6 +5,12 @@ use strict;
 use Data::Dumper;
 use Getopt::Std;
 
+# kill program and print help if no command line arguments were given
+if( scalar( @ARGV ) == 0 ){
+	&help;
+	die "Exiting program because no command line options were used.\n\n";
+}
+
 my %opts;
 getopts('f:m:o:p:', \%opts);
 
@@ -202,6 +208,30 @@ sub stdev{
 	my $sd = sqrt($variance);
 
 	return $sd;
+
+}
+
+#####################################################################################################
+# subroutine to print help
+
+sub help{
+
+	print "\ncompDparse.pl is a perl script developed by Steven Michael Mussmann\n\n";
+	print "To report bugs send an email to mussmann\@email.uark.edu\n";
+	print "When submitting bugs please include all input files, options used for the program, and all error messages that were printed to the screen\n\n";
+	print "Program Options:\n";
+	print "\t\t[ -f | -h | -m | -o | -p  ]\n\n";
+	print "\t-f:\tUsed to specify the input file.\n";
+	print "\t\tThe program will die if no file is specified.\n\n";
+	print "\t-h:\tDisplays this help message.\n";
+	print "\t\tThe program will die after the help message is displayed.\n\n";
+	print "\t-m:\tUse this flag to specify your population map text file.\n";
+	print "\t\tThis is a tab delimited file specifying the sample name in the first column and population name in the second.\n";
+	print "\t\tThe program will die if no file is specified.\n\n";
+	print "\t-o:\tSpecify the output file prefix.\n";
+	print "\t\tIf no name is provided, the file extensions \".sig.chisq\" and \".sig.zscore\" will be appended to the input file name.\n\n";
+	print "\t-p:\tSpecify a p-value for testing significance.\n";
+	print "\t\tValue must be less than 1 and greater than .0001. Default = 0.01.\n\n";
 
 }
 
